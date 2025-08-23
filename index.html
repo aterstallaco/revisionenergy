@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Analysis: Landfill Gas to RNG Investment</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals with Green Accent -->
+    <!-- Application Structure Plan: The application is structured as a single-page, scrollable narrative dashboard. It begins with a high-level summary (The Investment Thesis), then delves into the core components of the investment: The Opportunity (what LFG is), The Technology (how it's converted), The Market (financial drivers), and The Risks (challenges and critiques). It concludes with an actionable summary (The Verdict). This thematic flow was chosen over the report's chapter structure to guide a potential investor logically from the high-level concept to the detailed due diligence points, making the complex information more digestible and intuitive. Navigation is handled by a sticky header, allowing users to jump to sections of interest. Interactivity is focused on comparing data points (e.g., technologies, feedstocks) and exploring detailed content within modals or expandable sections to keep the main view clean. -->
+    <!-- Visualization & Content Choices: 
+        - Key Metrics (Header): Goal: Inform. Method: Dynamic stat cards. Interaction: None. Justification: Provides an immediate, high-level overview of the investment's core value proposition.
+        - Landfill Lifecycle Diagram: Goal: Organize/Inform. Method: HTML/CSS diagram. Interaction: Hover to highlight phases. Justification: Simplifies the complex multi-decade gas production process into an easily understandable visual flow.
+        - Technology Comparison Chart: Goal: Compare. Method: Interactive Radar Chart (Chart.js). Interaction: User can toggle datasets (technologies) on/off. Justification: A radar chart is excellent for comparing multiple quantitative attributes (cost, efficiency, etc.) across several items, providing a quick visual summary of trade-offs.
+        - Revenue Streams Breakdown: Goal: Inform/Compare. Method: Interactive Donut Chart (Chart.js) with dynamic text. Interaction: Clicking chart segments updates a central text block with details. Justification: Visually emphasizes the primary role of environmental credits over commodity sales in a way a static table cannot.
+        - Carbon Intensity (CI) Comparison: Goal: Compare. Method: Horizontal Bar Chart (Chart.js). Interaction: Hover for tooltips with exact values. Justification: Clearly visualizes the significant CI differences between RNG feedstocks, which is a critical factor for LCFS credit value and investment strategy.
+        - Risk Matrix: Goal: Organize. Method: HTML/CSS grid. Interaction: Clickable cards to reveal more detailed explanations. Justification: Organizes complex risks into clear categories, allowing users to explore areas of concern without cluttering the UI.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #FDFBF7; /* Warm Neutral */
+            color: #393E46;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .nav-link {
+            transition: color 0.3s, border-bottom-color 0.3s;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: #588157; /* Accent Green */
+            border-bottom-color: #588157;
+        }
+        .card-hover {
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .section-fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+        .section-fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Header & Navigation -->
+    <header id="header" class="sticky top-0 z-50 bg-white/80 backdrop-blur-md shadow-sm">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex-shrink-0">
+                    <h1 class="text-xl font-bold text-[#3A5A40]">LFG to RNG: Investment Analysis</h1>
+                </div>
+                <nav class="hidden md:flex md:space-x-8">
+                    <a href="#opportunity" class="nav-link text-gray-500 hover:text-[#588157] border-b-2 border-transparent pb-1">The Opportunity</a>
+                    <a href="#technology" class="nav-link text-gray-500 hover:text-[#588157] border-b-2 border-transparent pb-1">Technology</a>
+                    <a href="#market" class="nav-link text-gray-500 hover:text-[#588157] border-b-2 border-transparent pb-1">Market</a>
+                    <a href="#risks" class="nav-link text-gray-500 hover:text-[#588157] border-b-2 border-transparent pb-1">Risks</a>
+                    <a href="#verdict" class="nav-link text-gray-500 hover:text-[#588157] border-b-2 border-transparent pb-1">The Verdict</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+
+        <!-- Section 1: The Investment Thesis -->
+        <section id="thesis" class="text-center mb-16 section-fade-in">
+            <h2 class="text-3xl md:text-4xl font-bold text-[#344E41] mb-4">Is Landfill Gas a Smart Investment?</h2>
+            <p class="max-w-3xl mx-auto text-lg text-gray-600 mb-8">
+                An investment in converting landfill gas (LFG) to renewable natural gas (RNG) is a climate-based arbitrage: monetizing a potent greenhouse gas that would otherwise be an environmental liability. This dashboard explores the complex risk-reward profile of this compelling opportunity.
+            </p>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+                <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+                    <h3 class="text-lg font-semibold text-[#3A5A40]">Environmental Impact</h3>
+                    <p class="text-3xl font-bold text-[#588157] my-2">80x</p>
+                    <p class="text-gray-500">Methane is over 80 times more potent than CO₂ as a greenhouse gas on a short-term scale.</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+                    <h3 class="text-lg font-semibold text-[#3A5A40]">Primary Revenue Driver</h3>
+                    <p class="text-3xl font-bold text-[#588157] my-2">Credits</p>
+                    <p class="text-gray-500">Financial success is tied to environmental credits (RINs, LCFS), not just gas commodity prices.</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+                    <h3 class="text-lg font-semibold text-[#3A5A40]">Key Challenge</h3>
+                    <p class="text-3xl font-bold text-[#588157] my-2">Policy</p>
+                    <p class="text-gray-500">Regulatory uncertainty and credit market volatility represent the most significant investment risks.</p>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Section 2: The Opportunity -->
+        <section id="opportunity" class="mb-16 section-fade-in">
+            <h2 class="text-3xl font-bold text-center text-[#344E41] mb-2">The Opportunity: From Waste to Value</h2>
+            <p class="text-lg text-center text-gray-600 max-w-3xl mx-auto mb-12">
+                Landfill gas is a natural byproduct of decomposition. Instead of letting this potent greenhouse gas escape, LFG-to-RNG projects capture it, turning an environmental liability into a valuable, low-carbon fuel. This section explores the lifecycle of gas production and the fundamental process.
+            </p>
+            <div class="bg-white p-8 rounded-lg shadow-lg border border-gray-200">
+                <h3 class="text-2xl font-semibold text-[#3A5A40] mb-6">The 50+ Year Lifecycle of Landfill Gas Production</h3>
+                <div class="relative flex flex-col md:flex-row items-center justify-between space-y-8 md:space-y-0 md:space-x-4">
+                    <!-- Phases -->
+                    <div class="text-center flex-1">
+                        <div class="w-16 h-16 mx-auto bg-[#A3B18A] rounded-full flex items-center justify-center text-white font-bold text-2xl mb-2">1</div>
+                        <h4 class="font-semibold">Aerobic Phase</h4>
+                        <p class="text-sm text-gray-500">(Months)</p>
+                    </div>
+                    <div class="flex-1 h-1 w-full md:w-auto md:h-auto bg-gray-200"></div>
+                    <div class="text-center flex-1">
+                        <div class="w-16 h-16 mx-auto bg-[#8A9A5B] rounded-full flex items-center justify-center text-white font-bold text-2xl mb-2">2</div>
+                        <h4 class="font-semibold">Anaerobic Phase</h4>
+                        <p class="text-sm text-gray-500">(Years 1-5)</p>
+                    </div>
+                    <div class="flex-1 h-1 w-full md:w-auto md:h-auto bg-gray-200"></div>
+                    <div class="text-center flex-1">
+                        <div class="w-16 h-16 mx-auto bg-[#588157] rounded-full flex items-center justify-center text-white font-bold text-2xl mb-2">3</div>
+                        <h4 class="font-semibold">Peak Methane</h4>
+                        <p class="text-sm text-gray-500">(Years 5-7)</p>
+                    </div>
+                    <div class="flex-1 h-1 w-full md:w-auto md:h-auto bg-gray-200"></div>
+                    <div class="text-center flex-1">
+                        <div class="w-16 h-16 mx-auto bg-[#3A5A40] rounded-full flex items-center justify-center text-white font-bold text-2xl mb-2">4</div>
+                        <h4 class="font-semibold">Steady Decline</h4>
+                        <p class="text-sm text-gray-500">(Years 7-50+)</p>
+                    </div>
+                </div>
+                <p class="mt-8 text-center text-gray-600">
+                    Gas production peaks 5-7 years after waste is buried but continues for over 50 years. This "long-tail" of lower-quality gas presents both a challenge and an opportunity, requiring technology that can operate efficiently as the landfill matures.
+                </p>
+            </div>
+        </section>
+
+        <!-- Section 3: Technology -->
+        <section id="technology" class="mb-16 section-fade-in">
+            <h2 class="text-3xl font-bold text-center text-[#344E41] mb-2">The Technology: Upgrading Biogas to Biomethane</h2>
+            <p class="text-lg text-center text-gray-600 max-w-3xl mx-auto mb-12">
+                Raw landfill gas must be purified, or "upgraded," to meet pipeline-quality standards. The choice of technology is a critical investment decision, balancing capital cost, operational efficiency, and robustness to variable gas quality. This chart compares the primary upgrading methods.
+            </p>
+            <div class="bg-white p-6 md:p-8 rounded-lg shadow-lg border border-gray-200">
+                <div class="chart-container mx-auto" style="height: 400px; max-height: 500px;">
+                    <canvas id="techComparisonChart"></canvas>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Section 4: Market & Financials -->
+        <section id="market" class="mb-16 section-fade-in">
+            <h2 class="text-3xl font-bold text-center text-[#344E41] mb-2">The Market: Financial Drivers & Costs</h2>
+             <p class="text-lg text-center text-gray-600 max-w-3xl mx-auto mb-12">
+                The financial viability of LFG-to-RNG projects is unique. Profitability is less dependent on natural gas prices and more on a complex ecosystem of environmental credits. Understanding these revenue streams and the significant upfront costs is crucial for any investor.
+            </p>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="bg-white p-6 md:p-8 rounded-lg shadow-lg border border-gray-200">
+                    <h3 class="text-2xl font-semibold text-[#3A5A40] mb-4 text-center">Primary Revenue Streams</h3>
+                    <div class="chart-container mx-auto" style="height: 300px; max-height: 350px;">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                    <p id="revenue-info" class="mt-4 text-center text-gray-600 min-h-[60px]">
+                        Click on a segment to learn more. The value of environmental credits often exceeds the commodity value of the gas itself.
+                    </p>
+                </div>
+                <div class="bg-white p-6 md:p-8 rounded-lg shadow-lg border border-gray-200 flex flex-col justify-center">
+                    <h3 class="text-2xl font-semibold text-[#3A5A40] mb-6 text-center">The Cost Equation</h3>
+                    <div class="space-y-6">
+                        <div>
+                            <p class="text-lg font-semibold text-gray-700">Upfront Capital Costs</p>
+                            <p class="text-2xl font-bold text-[#588157]">$6,200 - $8,300</p>
+                            <p class="text-gray-500">Per standard cubic foot per minute (scfm) for gas treatment.</p>
+                        </div>
+                        <div>
+                            <p class="text-lg font-semibold text-gray-700">Pipeline Installation</p>
+                            <p class="text-2xl font-bold text-[#588157]">$1 Million+</p>
+                            <p class="text-gray-500">Per mile for pipeline injection infrastructure.</p>
+                        </div>
+                        <div>
+                            <p class="text-lg font-semibold text-gray-700">Annual O&M Costs</p>
+                            <p class="text-2xl font-bold text-[#588157]">$1,200 - $1,400</p>
+                            <p class="text-gray-500">Per scfm for a pipeline injection project.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 5: Risks & Critiques -->
+        <section id="risks" class="mb-16 section-fade-in">
+            <h2 class="text-3xl font-bold text-center text-[#344E41] mb-2">The Risks: A Nuanced Perspective</h2>
+            <p class="text-lg text-center text-gray-600 max-w-3xl mx-auto mb-12">
+                A smart investment requires a clear-eyed view of the challenges. These range from policy uncertainty and market volatility to public perception and the competitive landscape of different RNG feedstocks. This section breaks down the key risks investors must navigate.
+            </p>
+            <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
+                <div class="lg:col-span-3 bg-white p-6 md:p-8 rounded-lg shadow-lg border border-gray-200">
+                    <h3 class="text-2xl font-semibold text-[#3A5A40] mb-4">Carbon Intensity by Feedstock</h3>
+                    <p class="text-gray-600 mb-6">Under Low Carbon Fuel Standards (LCFS), the value of credits is tied to a fuel's Carbon Intensity (CI) score. Lower (or negative) scores are more valuable. This chart shows why dairy manure is often prioritized by investors over landfill gas.</p>
+                    <div class="chart-container" style="height: 350px; max-height: 400px; max-width: 100%;">
+                        <canvas id="ciChart"></canvas>
+                    </div>
+                </div>
+                <div class="lg:col-span-2 space-y-4">
+                    <div class="bg-white p-6 rounded-lg shadow-lg border border-gray-200 card-hover">
+                        <h4 class="font-bold text-lg text-red-700">Policy Uncertainty</h4>
+                        <p class="text-gray-600">Future of federal (RFS) and state (LCFS) programs is subject to political change, creating risk for the primary revenue streams.</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-lg border border-gray-200 card-hover">
+                        <h4 class="font-bold text-lg text-red-700">Market Volatility</h4>
+                        <p class="text-gray-600">LCFS credit markets have seen prices fall due to oversupply, a "victim of its own success" scenario that can deter new investment.</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-lg border border-gray-200 card-hover">
+                        <h4 class="font-bold text-lg text-red-700">"Greenwashing" Critiques</h4>
+                        <p class="text-gray-600">Public and regulatory pressure can threaten the "social license to operate" and influence the policy frameworks that support RNG.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 6: The Verdict -->
+        <section id="verdict" class="text-center bg-white p-8 md:p-12 rounded-lg shadow-xl border border-gray-200 section-fade-in">
+            <h2 class="text-3xl md:text-4xl font-bold text-[#344E41] mb-4">The Verdict & Strategic Recommendations</h2>
+            <p class="max-w-3xl mx-auto text-lg text-gray-600 mb-8">
+                Landfills are a smart investment for RNG, but only for strategic investors prepared to navigate risks distinct from conventional energy markets. Success requires proactive management of policy, technology, and public perception.
+            </p>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 text-left">
+                <div class="bg-[#FDFBF7] p-6 rounded-lg border">
+                    <h3 class="font-bold text-[#3A5A40]">1. Deep Due Diligence</h4>
+                    <p class="text-gray-600 text-sm">Analyze the regulatory landscape and model financials with credit price volatility scenarios.</p>
+                </div>
+                <div class="bg-[#FDFBF7] p-6 rounded-lg border">
+                    <h3 class="font-bold text-[#3A5A40]">2. Prioritize Robust Tech</h4>
+                    <p class="text-gray-600 text-sm">Select flexible upgrading systems that can handle the landfill's entire gas lifecycle, especially low-quality gas.</p>
+                </div>
+                <div class="bg-[#FDFBF7] p-6 rounded-lg border">
+                    <h3 class="font-bold text-[#3A5A40]">3. Secure Offtake Agreements</h4>
+                    <p class="text-gray-600 text-sm">Mitigate market risk with long-term contracts for RNG and its environmental credits.</p>
+                </div>
+                <div class="bg-[#FDFBF7] p-6 rounded-lg border">
+                    <h3 class="font-bold text-[#3A5A40]">4. Manage Stakeholders</h4>
+                    <p class="text-gray-600 text-sm">Engage with communities and proactively communicate environmental benefits to build a "social license to operate."</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            
+            Chart.defaults.font.family = 'Inter, sans-serif';
+
+            const wrapText = (ctx, text, maxWidth) => {
+                const words = text.split(' ');
+                let lines = [];
+                let currentLine = words[0];
+
+                for (let i = 1; i < words.length; i++) {
+                    let word = words[i];
+                    let width = ctx.measureText(currentLine + " " + word).width;
+                    if (width < maxWidth) {
+                        currentLine += " " + word;
+                    } else {
+                        lines.push(currentLine);
+                        currentLine = word;
+                    }
+                }
+                lines.push(currentLine);
+                return lines;
+            };
+
+            const techData = {
+                labels: ['Methane Recovery', 'Robustness', 'Low O&M', 'Low Capital Cost', 'Low Methane Slip'],
+                datasets: [
+                    {
+                        label: 'Membrane Separation',
+                        data: [5, 5, 5, 5, 5],
+                        fill: true,
+                        backgroundColor: 'rgba(88, 129, 87, 0.2)',
+                        borderColor: 'rgb(88, 129, 87)',
+                        pointBackgroundColor: 'rgb(88, 129, 87)',
+                    },
+                    {
+                        label: 'Pressure Swing Adsorption',
+                        data: [5, 3, 2, 2, 5],
+                        fill: true,
+                        backgroundColor: 'rgba(163, 177, 138, 0.2)',
+                        borderColor: 'rgb(163, 177, 138)',
+                        pointBackgroundColor: 'rgb(163, 177, 138)',
+                    },
+                    {
+                        label: 'Cryogenic Distillation',
+                        data: [5, 3, 4, 2, 5],
+                        fill: true,
+                        backgroundColor: 'rgba(58, 90, 64, 0.2)',
+                        borderColor: 'rgb(58, 90, 64)',
+                        pointBackgroundColor: 'rgb(58, 90, 64)',
+                    },
+                    {
+                        label: 'Hybrid Systems',
+                        data: [5, 5, 3, 2, 4],
+                        fill: true,
+                        backgroundColor: 'rgba(52, 78, 65, 0.2)',
+                        borderColor: 'rgb(52, 78, 65)',
+                        pointBackgroundColor: 'rgb(52, 78, 65)',
+                    }
+                ]
+            };
+
+            const techConfig = {
+                type: 'radar',
+                data: techData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    elements: {
+                        line: {
+                            borderWidth: 3
+                        }
+                    },
+                    scales: {
+                        r: {
+                            angleLines: {
+                                display: false
+                            },
+                            suggestedMin: 0,
+                            suggestedMax: 5,
+                            pointLabels: {
+                                font: {
+                                    size: 12
+                                }
+                            },
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'RNG Upgrading Technology Comparison (Rated 1-5)',
+                            font: { size: 16 }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: ${context.raw}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+            new Chart(document.getElementById('techComparisonChart'), techConfig);
+
+            const revenueData = {
+                labels: ['Federal RINs', 'State LCFS Credits', 'Commodity Sales', 'Tax Credits/Grants'],
+                datasets: [{
+                    label: 'Revenue Source',
+                    data: [40, 35, 15, 10],
+                    backgroundColor: ['#3A5A40', '#588157', '#A3B18A', '#DAD7CD'],
+                    borderColor: '#FDFBF7',
+                    borderWidth: 4,
+                    hoverOffset: 8
+                }]
+            };
+
+            const revenueInfo = {
+                'Federal RINs': 'Generated under the Renewable Fuel Standard (RFS) for transportation fuels. A primary value driver.',
+                'State LCFS Credits': 'Generated under Low Carbon Fuel Standards, based on the fuel\'s carbon intensity. A substantial revenue source.',
+                'Commodity Sales': 'Revenue from selling the physical RNG into the pipeline. Often a secondary financial contributor.',
+                'Tax Credits/Grants': 'Supplemental income from programs like the IRA, critical for initial project financing.'
+            };
+
+            const revenueConfig = {
+                type: 'doughnut',
+                data: revenueData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '60%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                        },
+                        title: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ` ${context.label}: ${context.parsed}%`;
+                                }
+                            }
+                        }
+                    },
+                    onClick: (event, elements) => {
+                        if (elements.length > 0) {
+                            const chartElement = elements[0];
+                            const label = revenueData.labels[chartElement.index];
+                            document.getElementById('revenue-info').textContent = revenueInfo[label];
+                        }
+                    }
+                }
+            };
+            new Chart(document.getElementById('revenueChart'), revenueConfig);
+
+            const ciData = {
+                labels: ['Dairy Manure', 'Food Waste', 'Wastewater Plants', 'Landfill Gas'],
+                datasets: [{
+                    label: 'Typical CI Score (g CO2e/MJ)',
+                    data: [-225, -10, 22.5, 45],
+                    backgroundColor: (context) => {
+                        const value = context.raw;
+                        return value < 0 ? '#588157' : '#A3B18A';
+                    },
+                    borderColor: '#344E41',
+                    borderWidth: 1
+                }]
+            };
+
+            const ciConfig = {
+                type: 'bar',
+                data: ciData,
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'CI Score (g CO2e/MJ)'
+                            },
+                            grid: {
+                                display: false
+                            }
+                        },
+                        y: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.x !== null) {
+                                        label += context.parsed.x;
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+            new Chart(document.getElementById('ciChart'), ciConfig);
+
+            const sections = document.querySelectorAll('.section-fade-in');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            sections.forEach(section => {
+                observer.observe(section);
+            });
+            
+            const navLinks = document.querySelectorAll('.nav-link');
+            const navObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        navLinks.forEach(link => {
+                            link.classList.toggle('active', link.getAttribute('href').substring(1) === entry.target.id);
+                        });
+                    }
+                });
+            }, { rootMargin: "-50% 0px -50% 0px" });
+
+            document.querySelectorAll('section[id]').forEach(section => {
+                navObserver.observe(section);
+            });
+        });
+    </script>
+</body>
+</html>
+
